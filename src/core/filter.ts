@@ -180,7 +180,7 @@ export class ProfanityFilter {
    * Only checks the most essential characters that appear in profanity
    */
   private hasBasicProfanityChars(text: string): boolean {
-    // Check only the most essential profanity characters for maximum speed
+    // Check essential profanity characters and common l33t speak substitutions
     for (let i = 0; i < text.length; i++) {
       const code = text.charCodeAt(i);
       if (
@@ -194,6 +194,8 @@ export class ProfanityFilter {
         code === 53 || // 5
         code === 55 || // 7
         code === 35 || // #
+        code === 108 || // l (important for nlgga -> nigga)
+        code === 124 || // | (important for n|gga -> nigga)
         code === 102 || // f
         code === 107 || // k
         code === 104 || // h
@@ -207,7 +209,16 @@ export class ProfanityFilter {
         code === 66 || // B
         code === 83 || // S
         code === 68 || // D
-        code === 67 // C
+        code === 67 || // C
+        code === 76 || // L (uppercase l)
+        code === 171 || // « (various Unicode similar chars)
+        code === 187 || // »
+        // Greek letters used in substitutions
+        code === 945 || // α (Greek alpha)
+        code === 964 || // τ (Greek tau)
+        code === 956 || // μ (Greek mu)
+        // Cyrillic letters (common range)
+        (code >= 1040 && code <= 1103) // Cyrillic block
       ) {
         return true;
       }
