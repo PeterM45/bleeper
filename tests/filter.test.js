@@ -114,7 +114,8 @@ describe('filter() function', () => {
     const result = filter(largeText);
     const duration = performance.now() - start;
 
-    assert.ok(duration < 100, `Performance too slow: ${duration}ms`);
+    const isCI = process.env.CI === 'true' || process.env.GITHUB_ACTIONS === 'true';
+    assert.ok(duration < (isCI ? 150 : 100), `Performance too slow: ${duration}ms`);
     assert.ok(result.includes('****'));
     assert.ok(result.startsWith('This is clean text.'));
   });
