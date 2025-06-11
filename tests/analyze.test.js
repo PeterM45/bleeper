@@ -172,8 +172,12 @@ describe('analyze() function', () => {
     const result = analyze(largeText);
     const duration = performance.now() - start;
 
-    const isCI = process.env.CI === 'true' || process.env.GITHUB_ACTIONS === 'true';
-    assert.ok(duration < (isCI ? 150 : 100), `Performance too slow: ${duration}ms`);
+    const isCI =
+      process.env.CI === 'true' || process.env.GITHUB_ACTIONS === 'true';
+    assert.ok(
+      duration < (isCI ? 150 : 100),
+      `Performance too slow: ${duration}ms`
+    );
     assert.equal(result.hasProfanity, true);
     assert.deepEqual(result.found, ['shit', 'damn']);
     assert.ok(result.clean.includes('****'));
