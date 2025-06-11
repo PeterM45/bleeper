@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.5] - 2025-06-11
+
+### Changed
+- perf: reduce bundle size by 51% (71kB → 35kB)
+
+- Enable TypeScript comment removal in build process
+- Significantly reduce JavaScript output size without affecting functionality
+- Maintain full API compatibility and performance characteristics
+- Package size now more appropriate for ultra-lightweight library
+
+
 ## [0.1.4] - 2025-06-11
 
 ### Changed
