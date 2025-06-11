@@ -142,4 +142,45 @@ export class Trie {
       (code >= 97 && code <= 122) // a-z
     );
   }
+
+  /**
+   * Find all substring matches without word boundary restrictions
+   * Used for profanity detection in normalized text where we want to find
+   * profanity substrings anywhere within the text (e.g., 'hell' in 'hello')
+   *
+   * @param text - Text to search through
+   * @returns Array of found words with their positions
+   * @complexity O(n * m) where n is text length, m is average word length
+   */
+  public findSubstrings(
+    text: string
+  ): Array<{ word: string; start: number; end: number }> {
+    const matches: Array<{ word: string; start: number; end: number }> = [];
+    const length = text.length;
+
+    for (let i = 0; i < length; i++) {
+      let node = this.root;
+      let j = i;
+
+      // Try to match as long as possible
+      while (j < length) {
+        const char = text.charAt(j);
+        if (!node.children.has(char)) break;
+
+        node = node.children.get(char)!;
+        j++;
+
+        // If we found a complete word
+        if (node.isEndOfWord) {
+          matches.push({
+            word: text.substring(i, j),
+            start: i,
+            end: j,
+          });
+        }
+      }
+    }
+
+    return matches;
+  }
 }

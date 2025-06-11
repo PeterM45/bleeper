@@ -6,8 +6,10 @@
 import { filter, contains, analyze } from 'bleeper';
 
 filter('This is shit'); // → 'This is ****'
-contains('Bad shit'); // → true
-analyze('Bad shit').found; // → ['shit']
+filter('What the f*ck'); // → 'What the ****'
+filter('h3ll0 world'); // → '***** world'
+contains('Bad f*ck'); // → true
+analyze('Bad f*ck').found; // → ['fuck']
 ```
 
 ## Functions
@@ -18,7 +20,8 @@ Replaces profanity with asterisks.
 
 ```typescript
 filter('This is shit'); // 'This is ****'
-filter('Bad word', { replacement: '█' }); // 'Bad ████'
+filter('What the f*ck'); // 'What the ****'
+filter('h3ll0', { replacement: '█' }); // '█████'
 ```
 
 ### `contains(text, options?)`
@@ -27,7 +30,8 @@ Returns true if profanity is found.
 
 ```typescript
 contains('This is clean'); // false
-contains('This is shit'); // true
+contains('This is f*ck'); // true
+contains('h3ll0 world'); // true
 ```
 
 ### `analyze(text, options?)`
@@ -35,8 +39,8 @@ contains('This is shit'); // true
 Returns detailed analysis.
 
 ```typescript
-analyze('This shit is damn');
-// { clean: 'This **** is ****', hasProfanity: true, found: ['shit', 'damn'] }
+analyze('This f*ck is h3ll0');
+// { clean: 'This **** is *****', hasProfanity: true, found: ['fuck', 'hell'] }
 ```
 
 ## Options
@@ -78,7 +82,8 @@ Automatically detects l33t speak and Unicode variants:
 - `a$$` → `ass`
 - `h3ll` → `hell`
 - `f*ck` → `fuck`
-- `phuck` → `fuk`
+- `h3ll0` → `hello` (detects `hell` within)
+- `phuck` → `fuck`
 
 **Unicode & International:**
 
@@ -93,5 +98,11 @@ Automatically detects l33t speak and Unicode variants:
 - `$hiτ` → `shit` (ASCII $ + Greek τ)
 - `nlgg@` → `nigga` (l→i + @→a)
 - `fμck` → `fuck` (Greek μ→u)
+
+**Advanced Features:**
+
+- **Substring Detection**: Finds profanity within normalized text (`h3ll0` → `hello` containing `hell`)
+- **Smart Boundaries**: Preserves word boundaries for normal text (`Class` won't match `ass`)
+- **Hybrid Matching**: Uses different strategies based on presence of substitution characters
 
 Supports comprehensive Unicode normalization and mixed character patterns.

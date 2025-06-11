@@ -33,7 +33,9 @@ export const CHAR_MAP = new Map([
   ['3', 'e'],
   ['€', 'e'],
   ['е', 'e'],
-  ['э', 'e'], // Cyrillic е, э
+  ['э', 'e'],
+  ['ε', 'e'], // Greek epsilon
+  ['є', 'e'], // Cyrillic є, Greek ε, Cyrillic е, э
   ['|=', 'f'],
   ['ph', 'f'],
   ['ƒ', 'f'],
@@ -90,11 +92,17 @@ export const CHAR_MAP = new Map([
   ['†', 't'],
   ['τ', 't'],
   ['т', 't'], // Greek tau, Cyrillic т
+  ['*', 'u'], // Common l33t speak: f*ck -> fuck
   ['|_|', 'u'],
   ['υ', 'u'],
   ['μ', 'u'],
   ['и', 'u'],
-  ['ц', 'u'], // Greek υ, μ, Cyrillic и, ц
+  ['ц', 'u'],
+  ['v', 'u'], // Common l33t speak substitution
+  ['ü', 'u'], // Umlaut u
+  ['ù', 'u'], // Accented u
+  ['ú', 'u'], // Accented u
+  ['û', 'u'], // Accented u variants, Greek υ, μ, Cyrillic и, ц
   ['\\/', 'v'],
   ['ν', 'v'],
   ['в', 'v'], // Greek ν, Cyrillic в as v
@@ -173,7 +181,6 @@ export const CHAR_MAP = new Map([
 export const MULTI_CHAR_SUBS: ReadonlyArray<readonly [string, string]> = [
   // English multi-char patterns
   ['ph', 'f'],
-  ['ck', 'k'],
   ['xx', 'x'],
   ['kk', 'k'],
   ['teh', 'the'],

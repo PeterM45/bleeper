@@ -51,34 +51,35 @@ export class ProfanityFilter {
     9,
     10,
     13, // whitespace
-    34,
-    35,
-    37,
-    38,
-    39,
-    40,
-    41,
-    42,
-    44,
-    45,
-    46,
-    47, // punctuation (excluding substitution chars)
-    58,
-    59,
-    60,
-    61,
-    62,
-    63, // more punctuation
-    91,
-    92,
-    93,
-    94,
-    95,
-    96, // brackets, backslash, etc
-    123,
-    124,
-    125,
-    126, // braces, pipe, tilde
+    34, // "
+    // 35, // # - REMOVED: is substitution char for 'h'
+    37, // %
+    38, // &
+    39, // '
+    40, // (
+    41, // )
+    // 42, // * - REMOVED: is substitution char for 'u'
+    // 43, // + - REMOVED: is substitution char for 't'
+    44, // ,
+    45, // -
+    46, // .
+    47, // /
+    58, // :
+    59, // ;
+    60, // <
+    61, // =
+    62, // >
+    63, // ?
+    91, // [
+    92, // \
+    93, // ]
+    94, // ^
+    95, // _
+    96, // `
+    123, // {
+    // 124, // | - REMOVED: is substitution char for 'i'
+    125, // }
+    126, // ~
   ]);
 
   /** Bloom filter for ultra-fast negative lookups - reduces false positive checks by ~80% */
@@ -301,11 +302,13 @@ export class ProfanityFilter {
         code === 35 || // #
         code === 108 || // l
         code === 124 || // |
+        code === 42 || // *
         code === 43 || // +
         // Greek letters
         code === 945 || // α (Greek alpha)
         code === 964 || // τ (Greek tau)
         code === 956 || // μ (Greek mu)
+        code === 949 || // ε (Greek epsilon)
         // Cyrillic letters (common range)
         (code >= 1040 && code <= 1103) || // Cyrillic block
         // Extended ASCII and other Unicode substitution chars
@@ -334,8 +337,21 @@ export class ProfanityFilter {
           continue;
         }
 
-        if (this.trie.contains(extracted)) {
-          return true;
+        // Check if significant normalization occurred (substitution characters present)
+        const hasSubstitutionChars = this.hasSubstitutionCharacters(token);
+
+        if (hasSubstitutionChars) {
+          // Use findSubstrings for tokens with substitution characters
+          const matches = this.trie.findSubstrings(extracted);
+          if (matches.length > 0) {
+            return true;
+          }
+        } else {
+          // Use findMatches for normal words to respect word boundaries
+          const matches = this.trie.findMatches(extracted);
+          if (matches.length > 0) {
+            return true;
+          }
         }
       }
     }
@@ -361,6 +377,32 @@ export class ProfanityFilter {
     }
 
     return result.toLowerCase();
+  }
+
+  /**
+   * Check if token contains substitution characters that indicate l33t speak
+   */
+  private hasSubstitutionCharacters(token: string): boolean {
+    for (let i = 0; i < token.length; i++) {
+      const code = token.charCodeAt(i);
+      if (
+        code === 36 || // $
+        code === 64 || // @
+        code === 42 || // *
+        code === 49 || // 1
+        code === 51 || // 3
+        code === 48 || // 0
+        code === 52 || // 4
+        code === 53 || // 5
+        code === 55 || // 7
+        code === 35 || // #
+        code === 124 || // |
+        code === 43 // +
+      ) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
@@ -483,7 +525,7 @@ export class ProfanityFilter {
       };
     }
 
-    const foundSet = new Set<string>(); // Use Set for deduplication
+    const found: string[] = []; // Store all found instances, including duplicates
     const length = text.length;
     let wordStart = -1;
 
@@ -506,7 +548,7 @@ export class ProfanityFilter {
           if (this.isPotentialWordFast(word)) {
             const foundWords = this.getProfanityVariantsFast(word);
             for (const foundWord of foundWords) {
-              foundSet.add(foundWord);
+              found.push(foundWord); // Add all instances, including duplicates
             }
           }
 
@@ -515,7 +557,6 @@ export class ProfanityFilter {
       }
     }
 
-    const found = Array.from(foundSet);
     const clean = found.length > 0 ? this.filter(text) : text;
 
     return {
@@ -541,8 +582,21 @@ export class ProfanityFilter {
           continue;
         }
 
-        if (this.trie.contains(extracted)) {
-          found.push(extracted);
+        // Check if significant normalization occurred (substitution characters present)
+        const hasSubstitutionChars = this.hasSubstitutionCharacters(token);
+
+        if (hasSubstitutionChars) {
+          // Use findSubstrings for tokens with substitution characters
+          const matches = this.trie.findSubstrings(extracted);
+          for (const match of matches) {
+            found.push(match.word);
+          }
+        } else {
+          // Use findMatches for normal words to respect word boundaries
+          const matches = this.trie.findMatches(extracted);
+          for (const match of matches) {
+            found.push(match.word);
+          }
         }
       }
     }

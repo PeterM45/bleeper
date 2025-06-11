@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { ProfanityFilter } from './dist/index.js';
+import { ProfanityFilter } from '../dist/index.js';
 
 /**
  * Performance benchmark demonstrating ultra-optimized profanity filtering

@@ -20,8 +20,10 @@ npm install bleeper
 import { filter, contains, analyze } from 'bleeper';
 
 filter('This is shit'); // → 'This is ****'
-contains('Bad shit'); // → true
-analyze('Bad shit').found; // → ['shit']
+filter('What the f*ck'); // → 'What the ****'
+filter('h3ll0 world'); // → '***** world'
+contains('Bad f*ck'); // → true
+analyze('Bad f*ck').found; // → ['fuck']
 ```
 
 ## Advanced
@@ -42,10 +44,12 @@ const strict = new ProfanityFilter({
 
 ## Features
 
-- **Advanced l33t speak detection**: `$h1t`, `a$$`, `f*ck`, `ph*ck`
+- **Advanced l33t speak detection**: `$h1t`, `a$$`, `f*ck`, `h3ll0`, `phuck`
+- **Robust character substitution**: `*` → `u`, `3` → `e`, `@` → `a`, `#` → `h`
+- **Substring profanity detection**: finds `hell` within `h3ll0` → `hello`
 - **Full Unicode support**: Greek (`αss`), Cyrillic (`а$$`), extended ASCII (`ƒuck`)
 - **Mixed character patterns**: `$hiτ`, `nlgg@`, international l33t combinations
-- **Word boundaries**: won't flag "class" for containing "ass"
+- **Smart word boundaries**: won't flag "Class" for containing "ass"
 - **Zero false positives**: intelligent context-aware filtering
 
 ## API
