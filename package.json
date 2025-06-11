@@ -1,0 +1,59 @@
+{
+  "name": "bleeper",
+  "version": "0.1.1",
+  "description": "Ultra-lightweight, zero-dependency profanity filter with advanced character substitution detection",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "node --test",
+    "clean": "rm -rf dist",
+    "lint": "echo 'Linting would go here - keeping minimal for zero dependencies'",
+    "benchmark": "node scripts/benchmark.js",
+    "bundle-size": "node scripts/bundle-size.js",
+    "perf": "node scripts/perf-test.js",
+    "perf-fast": "node scripts/fast-perf-test.js",
+    "debug-large": "node debug-large-text.js",
+    "prepack": "npm run clean && npm run build",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "profanity",
+    "filter",
+    "typescript",
+    "lightweight",
+    "zero-dependencies",
+    "l33t-speak",
+    "unicode",
+    "text-processing",
+    "content-moderation",
+    "performance"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/PeterM45/bleeper.git"
+  },
+  "bugs": {
+    "url": "https://github.com/PeterM45/bleeper/issues"
+  },
+  "homepage": "https://github.com/PeterM45/bleeper#readme",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "sideEffects": false,
+  "devDependencies": {
+    "typescript": "^5.3.0"
+  }
+}
