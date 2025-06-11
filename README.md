@@ -1,6 +1,6 @@
 # Bleeper
 
-Ultra-lightweight profanity filter with zero dependencies.
+Lightweight profanity filter with zero dependencies.
 
 ## Install
 
@@ -27,7 +27,7 @@ analyze('Bad f*ck').found; // → ['fuck']
 - **Unicode support**: Greek (`αss`), Cyrillic (`а$$`), etc.
 - **Word boundaries**: Won't flag "Class" for containing "ass"
 - **Zero dependencies**: Pure TypeScript
-- **Tiny bundle**: <2KB minified
+- **Lightweight**: ~8KB package size
 
 ## API
 

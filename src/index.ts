@@ -1,5 +1,5 @@
 /**
- * Bleeper - Ultra-lightweight profanity filter
+ * Bleeper - Lightweight profanity filter
  *
  * Zero dependencies, maximum performance, TypeScript-first profanity filtering
  * with advanced character substitution detection and international support.
