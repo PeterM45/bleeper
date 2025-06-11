@@ -1,6 +1,6 @@
 {
   "name": "bleeper",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Ultra-lightweight, zero-dependency profanity filter",
   "type": "module",
   "main": "./dist/index.js",
