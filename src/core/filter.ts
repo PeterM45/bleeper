@@ -194,8 +194,8 @@ export class ProfanityFilter {
         code === 53 || // 5
         code === 55 || // 7
         code === 35 || // #
-        code === 108 || // l (important for nlgga -> nigga)
-        code === 124 || // | (important for n|gga -> nigga)
+        code === 108 || // l
+        code === 124 || // |
         code === 102 || // f
         code === 107 || // k
         code === 104 || // h
@@ -282,13 +282,36 @@ export class ProfanityFilter {
   private isPotentialWordFast(token: string): boolean {
     if (token.length < 3) return false;
 
-    // Check if it has at least one letter or number (not just punctuation)
+    // Check if it has at least one letter, number, or substitution character
     for (let i = 0; i < token.length; i++) {
       const code = token.charCodeAt(i);
       if (
         (code >= 48 && code <= 57) || // 0-9
         (code >= 65 && code <= 90) || // A-Z
-        (code >= 97 && code <= 122) // a-z
+        (code >= 97 && code <= 122) || // a-z
+        // Common substitution characters
+        code === 36 || // $
+        code === 64 || // @
+        code === 49 || // 1
+        code === 51 || // 3
+        code === 48 || // 0
+        code === 52 || // 4
+        code === 53 || // 5
+        code === 55 || // 7
+        code === 35 || // #
+        code === 108 || // l
+        code === 124 || // |
+        code === 43 || // +
+        // Greek letters
+        code === 945 || // α (Greek alpha)
+        code === 964 || // τ (Greek tau)
+        code === 956 || // μ (Greek mu)
+        // Cyrillic letters (common range)
+        (code >= 1040 && code <= 1103) || // Cyrillic block
+        // Extended ASCII and other Unicode substitution chars
+        code === 402 || // ƒ
+        code === 171 || // «
+        code === 187 // »
       ) {
         return true;
       }

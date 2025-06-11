@@ -70,11 +70,28 @@ strict.filter('This shit is restricted'); // 'This shit is **********'
 
 ## Character Substitution
 
-Automatically detects l33t speak:
+Automatically detects l33t speak and Unicode variants:
+
+**ASCII L33t Speak:**
 
 - `$h1t` → `shit`
 - `a$$` → `ass`
 - `h3ll` → `hell`
 - `f*ck` → `fuck`
+- `phuck` → `fuk`
 
-Supports Unicode and international variants.
+**Unicode & International:**
+
+- `αss` → `ass` (Greek alpha)
+- `shiτ` → `shit` (Greek tau)
+- `а$$` → `ass` (Cyrillic a)
+- `shiт` → `shit` (Cyrillic t)
+- `ƒuck` → `fuck` (Extended ASCII)
+
+**Mixed Patterns:**
+
+- `$hiτ` → `shit` (ASCII $ + Greek τ)
+- `nlgg@` → `nigga` (l→i + @→a)
+- `fμck` → `fuck` (Greek μ→u)
+
+Supports comprehensive Unicode normalization and mixed character patterns.

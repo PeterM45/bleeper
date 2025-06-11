@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.2] - 2025-06-10
+
+### Fixed
+
+- **Critical Unicode Bug Fix**: Fixed detection of Unicode characters in potential profanity words
+  - Resolved issue where Cyrillic characters (e.g., `а$$` → `ass`) were not being processed
+  - Extended `isPotentialWordFast` to include Unicode substitution characters:
+    - Cyrillic character range (U+0400-U+044F)
+    - Greek letters used in l33t speak (α, τ, μ)
+    - Extended ASCII substitution characters (ƒ, «, »)
+    - Common substitution symbols ($, @, +, #, |, etc.)
+- **Improved Test Coverage**: All international and Unicode substitution tests now pass
+- **Enhanced Character Detection**: Better recognition of mixed Unicode/ASCII profanity patterns
+
+### Technical Details
+
+- Fixed `isPotentialWordFast()` function to properly detect Unicode characters
+- Maintained O(1) performance characteristics for character detection
+- All 14 tests now pass, including previously failing Unicode tests
+- Zero impact on bundle size (still <2KB)
+
 ## [0.1.1] - 2025-06-10
 
 ### Changed

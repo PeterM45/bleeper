@@ -1,6 +1,6 @@
 {
   "name": "bleeper",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Ultra-lightweight, zero-dependency profanity filter with advanced character substitution detection",
   "type": "module",
   "main": "./dist/index.js",
@@ -39,7 +39,7 @@
     "content-moderation",
     "performance"
   ],
-  "author": "",
+  "author": "PeterM45",
   "license": "MIT",
   "repository": {
     "type": "git",

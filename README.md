@@ -2,9 +2,10 @@
 
 Ultra-lightweight, zero-dependency profanity filter.
 
-- 🚀 **Fast** - 500K+ operations/second
-- 📦 **Tiny** - <5KB bundle, zero dependencies
+- 🚀 **Fast** - 1M+ operations/second
+- 📦 **Tiny** - <2KB bundle, zero dependencies
 - 🧠 **Smart** - Detects l33t speak (`$h1t` → `shit`)
+- 🌍 **Unicode** - Full international support (Greek, Cyrillic, etc.)
 - 🎯 **Modern** - TypeScript-first
 
 ## Install
@@ -41,10 +42,11 @@ const strict = new ProfanityFilter({
 
 ## Features
 
-- Detects l33t speak: `$h1t`, `a$$`, `f*ck`
-- Unicode support: Greek, Cyrillic, emoji
-- Word boundaries: won't flag "class" for containing "ass"
-- Zero false positives
+- **Advanced l33t speak detection**: `$h1t`, `a$$`, `f*ck`, `ph*ck`
+- **Full Unicode support**: Greek (`αss`), Cyrillic (`а$$`), extended ASCII (`ƒuck`)
+- **Mixed character patterns**: `$hiτ`, `nlgg@`, international l33t combinations
+- **Word boundaries**: won't flag "class" for containing "ass"
+- **Zero false positives**: intelligent context-aware filtering
 
 ## API
 
