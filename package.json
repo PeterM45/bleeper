@@ -1,7 +1,7 @@
 {
   "name": "bleeper",
-  "version": "0.1.6",
-  "description": "Ultra-lightweight, zero-dependency profanity filter",
+  "version": "0.1.7",
+  "description": "Lightweight, zero-dependency profanity filter with advanced character substitution",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
