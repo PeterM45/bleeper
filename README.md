@@ -1,12 +1,6 @@
 # Bleeper
 
-Ultra-lightweight, zero-dependency profanity filter.
-
-- 🚀 **Fast** - 1M+ operations/second
-- 📦 **Tiny** - <2KB bundle, zero dependencies
-- 🧠 **Smart** - Detects l33t speak (`$h1t` → `shit`)
-- 🌍 **Unicode** - Full international support (Greek, Cyrillic, etc.)
-- 🎯 **Modern** - TypeScript-first
+Ultra-lightweight profanity filter with zero dependencies.
 
 ## Install
 
@@ -22,49 +16,73 @@ import { filter, contains, analyze } from 'bleeper';
 filter('This is shit'); // → 'This is ****'
 filter('What the f*ck'); // → 'What the ****'
 filter('h3ll0 world'); // → '***** world'
+
 contains('Bad f*ck'); // → true
 analyze('Bad f*ck').found; // → ['fuck']
 ```
 
-## Advanced
-
-```typescript
-// Custom replacement
-filter('shit', { replacement: '█' }); // → '████'
-
-// Custom words
-const filter = new ProfanityFilter({ customWords: ['badword'] });
-
-// Custom only mode
-const strict = new ProfanityFilter({
-  customWords: ['restricted'],
-  customOnly: true,
-});
-```
-
 ## Features
 
-- **Advanced l33t speak detection**: `$h1t`, `a$$`, `f*ck`, `h3ll0`, `phuck`
-- **Robust character substitution**: `*` → `u`, `3` → `e`, `@` → `a`, `#` → `h`
-- **Substring profanity detection**: finds `hell` within `h3ll0` → `hello`
-- **Full Unicode support**: Greek (`αss`), Cyrillic (`а$$`), extended ASCII (`ƒuck`)
-- **Mixed character patterns**: `$hiτ`, `nlgg@`, international l33t combinations
-- **Smart word boundaries**: won't flag "Class" for containing "ass"
-- **Zero false positives**: intelligent context-aware filtering
-
-## Performance & Cost Considerations
-
-Bleeper is optimized for minimal computational overhead:
-
-- **Small texts** (< 1KB): 50K-800K+ ops/sec ⚡
-- **Large texts**: Use chunking for cost-effective processing
-- **Serverless friendly**: Minimal memory footprint (~1-5MB)
-
-For production use with large texts or high-frequency filtering, see [docs/PERFORMANCE.md](docs/PERFORMANCE.md) for optimization strategies.
+- **Character substitution**: `f*ck`, `$h1t`, `h3ll0`, etc.
+- **Unicode support**: Greek (`αss`), Cyrillic (`а$$`), etc.
+- **Word boundaries**: Won't flag "Class" for containing "ass"
+- **Zero dependencies**: Pure TypeScript
+- **Tiny bundle**: <2KB minified
 
 ## API
 
-See [docs/API.md](docs/API.md) for complete reference.
+### `filter(text, options?)`
+
+Replaces profanity with asterisks.
+
+```typescript
+filter('Hello shit');
+// → 'Hello ****'
+
+filter('Hello shit', { replacement: '[CENSORED]' });
+// → 'Hello [CENSORED]'
+
+filter('Hello shit', { customWords: ['hello'] });
+// → '**** ****'
+```
+
+### `contains(text, options?)`
+
+Returns `true` if text contains profanity.
+
+```typescript
+contains('Hello shit'); // → true
+contains('Hello world'); // → false
+```
+
+### `analyze(text, options?)`
+
+Returns detailed analysis.
+
+```typescript
+analyze('Hello shit');
+// → {
+//     clean: 'Hello ****',
+//     hasProfanity: true,
+//     found: ['shit']
+//   }
+```
+
+## Development
+
+### Version Management
+
+To ensure version consistency across `package.json`, `CHANGELOG.md`, and git tags:
+
+```bash
+# Check version consistency
+npm run check-version
+
+# Bump version (updates all files + creates git tag)
+npm run bump patch "Fix character substitution bug"
+npm run bump minor "Add new feature"
+npm run bump major "Breaking API change"
+```
 
 ## License
 

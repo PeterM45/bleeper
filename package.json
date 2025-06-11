@@ -1,7 +1,7 @@
 {
   "name": "bleeper",
   "version": "0.1.3",
-  "description": "Ultra-lightweight, zero-dependency profanity filter with advanced character substitution detection",
+  "description": "Ultra-lightweight, zero-dependency profanity filter",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -17,32 +17,18 @@
   "scripts": {
     "build": "tsc",
     "test": "node --test tests/filter.test.js tests/contains.test.js tests/analyze.test.js scripts/perf-test.js",
-    "test:filter": "node --test tests/filter.test.js",
-    "test:contains": "node --test tests/contains.test.js",
-    "test:analyze": "node --test tests/analyze.test.js",
-    "test:perf": "node scripts/perf-test.js",
-    "test:ci": "node scripts/ci-perf-test.js",
-    "debug": "node scripts/debug.js",
     "clean": "rm -rf dist",
-    "lint": "echo 'Linting would go here - keeping minimal for zero dependencies'",
-    "benchmark": "node scripts/benchmark.js",
-    "benchmark:ci": "node scripts/ci-perf-test.js",
-    "bundle-size": "node scripts/bundle-size.js",
-    "perf": "node scripts/perf-test.js",
-    "prepack": "npm run clean && npm run build",
-    "typecheck": "tsc --noEmit"
+    "check-version": "node scripts/check-version.js",
+    "bump": "node scripts/bump.js",
+    "setup-hooks": "git config core.hooksPath .githooks",
+    "prepack": "npm run clean && npm run build && npm run check-version"
   },
   "keywords": [
     "profanity",
     "filter",
     "typescript",
     "lightweight",
-    "zero-dependencies",
-    "l33t-speak",
-    "unicode",
-    "text-processing",
-    "content-moderation",
-    "performance"
+    "zero-dependencies"
   ],
   "author": "PeterM45",
   "license": "MIT",

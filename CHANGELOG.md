@@ -9,35 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **Critical Character Substitution Bug Fixes**: Fixed detection of advanced l33t speak patterns
-  - **`f*ck` detection**: Fixed issue where `*` character was treated as word boundary instead of substitution
-  - **`h3ll0` detection**: Added substring matching for profanity within normalized text (finds `hell` in `hello`)
-  - **Word tokenization**: Removed substitution characters (`*`, `#`, `+`, `|`) from boundary detection
-- **Enhanced Trie Functionality**: Added `findSubstrings()` method for detecting profanity within normalized words
-- **Smart Detection Logic**:
-  - Uses substring matching for tokens with substitution characters
-  - Preserves word boundary protection for normal words (prevents `ass` in `Class`)
-- **Test Suite Improvements**: All 39 tests now pass (previously 6 were failing)
-
-### Added
-
-- **Performance Documentation**: Added `docs/PERFORMANCE.md` with optimization strategies
-- **CI Optimization**: Added lightweight performance tests for reduced CI compute costs
-- **Resource Monitoring**: Documentation for computational cost considerations in production
-- **Hosting Cost Guidelines**: Best practices for serverless and edge computing deployments
-
-### Technical Details
-
-- Fixed `BOUNDARY_CHARS` set to exclude substitution characters (\*, #, +, |)
-- Added `findSubstrings()` method to Trie class for non-boundary-restricted matching
-- Added `hasSubstitutionCharacters()` method for intelligent detection strategy selection
-- Updated `containsProfanityVariantsFast()` and `getProfanityVariantsFast()` with hybrid approach
-- Maintained O(n) performance and zero dependencies
-- All character substitutions now work correctly: `f*ck`, `h3ll0`, `$h1t`, `phuck`, etc.
-
-### Changed
-
-- Updated filter test expectations to correctly handle `f*ck` → `fuck` detection
+- Fixed character substitution detection (`f*ck`, `h3ll0`, etc.)
+- Fixed word boundary detection for l33t speak
+- All tests now pass (39/39)
 
 ## [0.1.2] - 2025-06-10
 

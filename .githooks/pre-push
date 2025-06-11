@@ -1,0 +1,16 @@
+#!/bin/sh
+#
+# Pre-push hook to check version consistency
+# Prevents pushing when package.json and CHANGELOG.md versions don't match
+#
+
+echo "🔍 Checking version consistency before push..."
+
+if npm run check-version --silent; then
+  echo "✅ Version check passed"
+  exit 0
+else
+  echo "❌ Version check failed - push aborted"
+  echo "Run 'npm run check-version' for details"
+  exit 1
+fi

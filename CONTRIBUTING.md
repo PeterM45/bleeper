@@ -10,6 +10,26 @@ npm run build
 npm test
 ```
 
+## Setup Git Hooks
+
+```bash
+npm run setup-hooks
+```
+
+## Version Management
+
+Always use the bump script to ensure consistency:
+
+```bash
+# Check versions are in sync
+npm run check-version
+
+# Bump version (updates package.json, CHANGELOG.md, creates git tag)
+npm run bump patch "Bug fix description"
+npm run bump minor "New feature description"
+npm run bump major "Breaking change description"
+```
+
 ## Rules
 
 - Zero dependencies
