@@ -52,6 +52,16 @@ const strict = new ProfanityFilter({
 - **Smart word boundaries**: won't flag "Class" for containing "ass"
 - **Zero false positives**: intelligent context-aware filtering
 
+## Performance & Cost Considerations
+
+Bleeper is optimized for minimal computational overhead:
+
+- **Small texts** (< 1KB): 50K-800K+ ops/sec ⚡
+- **Large texts**: Use chunking for cost-effective processing
+- **Serverless friendly**: Minimal memory footprint (~1-5MB)
+
+For production use with large texts or high-frequency filtering, see [docs/PERFORMANCE.md](docs/PERFORMANCE.md) for optimization strategies.
+
 ## API
 
 See [docs/API.md](docs/API.md) for complete reference.

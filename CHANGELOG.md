@@ -19,6 +19,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Preserves word boundary protection for normal words (prevents `ass` in `Class`)
 - **Test Suite Improvements**: All 39 tests now pass (previously 6 were failing)
 
+### Added
+
+- **Performance Documentation**: Added `docs/PERFORMANCE.md` with optimization strategies
+- **CI Optimization**: Added lightweight performance tests for reduced CI compute costs
+- **Resource Monitoring**: Documentation for computational cost considerations in production
+- **Hosting Cost Guidelines**: Best practices for serverless and edge computing deployments
+
 ### Technical Details
 
 - Fixed `BOUNDARY_CHARS` set to exclude substitution characters (\*, #, +, |)

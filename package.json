@@ -21,10 +21,12 @@
     "test:contains": "node --test tests/contains.test.js",
     "test:analyze": "node --test tests/analyze.test.js",
     "test:perf": "node scripts/perf-test.js",
+    "test:ci": "node scripts/ci-perf-test.js",
     "debug": "node scripts/debug.js",
     "clean": "rm -rf dist",
     "lint": "echo 'Linting would go here - keeping minimal for zero dependencies'",
     "benchmark": "node scripts/benchmark.js",
+    "benchmark:ci": "node scripts/ci-perf-test.js",
     "bundle-size": "node scripts/bundle-size.js",
     "perf": "node scripts/perf-test.js",
     "prepack": "npm run clean && npm run build",
@@ -46,7 +48,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/PeterM45/bleeper.git"
+    "url": "git+https://github.com/PeterM45/bleeper.git"
   },
   "bugs": {
     "url": "https://github.com/PeterM45/bleeper/issues"
