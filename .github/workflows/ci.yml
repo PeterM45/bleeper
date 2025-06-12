@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -59,7 +63,8 @@ jobs:
           jq '.name = "bleeper" | del(.publishConfig)' package.json > package-npm.json
           mv package.json package-github.json
           mv package-npm.json package.json
-          npm publish --access public || echo "Version already published to npm"
+          echo "Publishing to npm as unscoped package 'bleeper'..."
+          npm publish --access public --verbose || echo "Version already published to npm"
           # Restore original package.json
           mv package-github.json package.json
         env:
@@ -71,7 +76,18 @@ jobs:
           node-version: '18.x'
           registry-url: 'https://npm.pkg.github.com'
 
+      - name: Configure npm for GitHub Packages
+        run: |
+          echo "@peterm45:registry=https://npm.pkg.github.com" >> .npmrc
+          echo "//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}" >> .npmrc
+
       - name: Publish to GitHub Packages (as scoped package)
-        run: npm publish --access public || echo "Version already published to GitHub Packages"
+        run: |
+          echo "Publishing to GitHub Packages with scope @peterm45..."
+          echo "Registry: https://npm.pkg.github.com"
+          echo "Package name: @peterm45/bleeper"
+          echo "Repository URL: $(jq -r '.repository.url' package.json)"
+          echo "GitHub repository: ${{ github.repository }}"
+          npm publish --access public --verbose
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
