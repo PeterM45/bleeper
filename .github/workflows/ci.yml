@@ -51,8 +51,17 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Publish to npm
-        run: npm publish --access public || echo "Version already published to npm"
+      - name: Publish to npm (as unscoped package)
+        run: |
+          # Install jq for JSON manipulation
+          sudo apt-get update && sudo apt-get install -y jq
+          # Create temporary package.json with unscoped name for npm
+          jq '.name = "bleeper" | del(.publishConfig)' package.json > package-npm.json
+          mv package.json package-github.json
+          mv package-npm.json package.json
+          npm publish --access public || echo "Version already published to npm"
+          # Restore original package.json
+          mv package-github.json package.json
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
@@ -62,7 +71,7 @@ jobs:
           node-version: '18.x'
           registry-url: 'https://npm.pkg.github.com'
 
-      - name: Publish to GitHub Packages
+      - name: Publish to GitHub Packages (as scoped package)
         run: npm publish --access public || echo "Version already published to GitHub Packages"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

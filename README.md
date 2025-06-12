@@ -10,20 +10,20 @@ npm install bleeper
 ```
 
 ### From GitHub Packages
-First, configure npm to use GitHub Packages for packages from the `PeterM45` owner:
 ```bash
-echo "@peterm45:registry=https://npm.pkg.github.com" >> .npmrc
+npm install @peterm45/bleeper
 ```
 
-Then install with your GitHub token:
+*Note: For GitHub Packages, you may need to configure your `.npmrc`:*
 ```bash
-npm install bleeper --registry=https://npm.pkg.github.com
+echo "@peterm45:registry=https://npm.pkg.github.com" >> .npmrc
 ```
 
 ## Usage
 
 ```typescript
 import { filter, contains, analyze } from 'bleeper';
+// or from GitHub Packages: import { filter, contains, analyze } from '@peterm45/bleeper';
 
 filter('This is shit'); // → 'This is ****'
 filter('What the f*ck'); // → 'What the ****'

@@ -1,5 +1,5 @@
 {
-  "name": "bleeper",
+  "name": "@peterm45/bleeper",
   "version": "0.2.0",
   "description": "Lightweight, zero-dependency profanity filter with advanced character substitution",
   "type": "module",
@@ -14,6 +14,9 @@
   "files": [
     "dist"
   ],
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "scripts": {
     "build": "tsc",
     "test": "node --test tests/filter.test.js tests/contains.test.js tests/analyze.test.js scripts/perf-test.js",
