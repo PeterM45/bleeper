@@ -1,6 +1,6 @@
 {
-  "name": "@PeterM45/bleeper",
-  "version": "0.2.2",
+  "name": "@peterm45/bleeper",
+  "version": "0.2.3",
   "description": "Lightweight, zero-dependency profanity filter with advanced character substitution",
   "type": "module",
   "main": "./dist/index.js",
