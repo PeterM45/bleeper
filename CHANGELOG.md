@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2025-06-12
+
+### Changed
+- fix: resolve GitHub Packages publishing issue
+
+- Configure package as scoped @peterm45/bleeper for GitHub Packages
+- Maintain unscoped 'bleeper' name for npm registry via CI magic
+- Add proper publishConfig for GitHub Packages registry
+- Update installation instructions for both registries
+- Should now appear in GitHub repository Packages section
+
+
 ## [0.2.0] - 2025-06-12
 
 ### Changed
