@@ -5,16 +5,19 @@ Lightweight profanity filter with zero dependencies.
 ## Install
 
 ### From npm (public registry)
+
 ```bash
 npm install bleeper
 ```
 
 ### From GitHub Packages
+
 ```bash
 npm install @peterm45/bleeper
 ```
 
-*Note: For GitHub Packages, you may need to configure your `.npmrc`:*
+_Note: For GitHub Packages, you may need to configure your `.npmrc`:_
+
 ```bash
 echo "@peterm45:registry=https://npm.pkg.github.com" >> .npmrc
 ```
