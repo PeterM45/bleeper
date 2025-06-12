@@ -51,7 +51,18 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Publish
-        run: npm publish --access public || echo "Version already published"
+      - name: Publish to npm
+        run: npm publish --access public || echo "Version already published to npm"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Setup Node.js for GitHub Packages
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.x'
+          registry-url: 'https://npm.pkg.github.com'
+
+      - name: Publish to GitHub Packages
+        run: npm publish --access public || echo "Version already published to GitHub Packages"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -4,8 +4,20 @@ Lightweight profanity filter with zero dependencies.
 
 ## Install
 
+### From npm (public registry)
 ```bash
 npm install bleeper
+```
+
+### From GitHub Packages
+First, configure npm to use GitHub Packages for packages from the `PeterM45` owner:
+```bash
+echo "@peterm45:registry=https://npm.pkg.github.com" >> .npmrc
+```
+
+Then install with your GitHub token:
+```bash
+npm install bleeper --registry=https://npm.pkg.github.com
 ```
 
 ## Usage
