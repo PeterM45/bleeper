@@ -75,11 +75,7 @@ jobs:
         with:
           node-version: '18.x'
           registry-url: 'https://npm.pkg.github.com'
-
-      - name: Configure npm for GitHub Packages
-        run: |
-          echo "@peterm45:registry=https://npm.pkg.github.com" >> .npmrc
-          echo "//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}" >> .npmrc
+          scope: '@peterm45'
 
       - name: Publish to GitHub Packages (as scoped package)
         run: |
