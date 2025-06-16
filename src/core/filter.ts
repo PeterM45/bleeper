@@ -256,10 +256,52 @@ export class ProfanityFilter {
       } else {
         // In a word, looking for word end
         if (isBoundary || i === length) {
-          // End of word found (no extension logic for simplicity and performance)
+          // End of word found - check for attached content to avoid false positives
           const word = text.slice(wordStart, i);
 
-          if (this.isPotentialWordFast(word)) {
+          // Check if this word is attached to problematic content that indicates it shouldn't be filtered
+          // Look ahead for non-boundary characters that suggest attachment
+          let hasProblematicAttachment = false;
+          if (i < length) {
+            const nextChar = text.charCodeAt(i);
+            // Check for characters that indicate the word is part of a larger construct
+            if (
+              nextChar === 35 || // # (hashtag)
+              (nextChar >= 48 && nextChar <= 57) || // 0-9 (numbers directly attached)
+              nextChar === 47 || // / (URLs)
+              nextChar === 95 // _ (identifiers)
+            ) {
+              hasProblematicAttachment = true;
+            } else if (nextChar === 46 && i + 1 < length) {
+              // . is attachment only if followed by letters (like .com, .org)
+              const charAfterDot = text.charCodeAt(i + 1);
+              if (
+                (charAfterDot >= 97 && charAfterDot <= 122) ||
+                (charAfterDot >= 65 && charAfterDot <= 90)
+              ) {
+                hasProblematicAttachment = true;
+              }
+            } else if (nextChar === 58 && i + 1 < length) {
+              // : is attachment only if followed by // (like http://)
+              const charAfterColon = text.charCodeAt(i + 1);
+              if (charAfterColon === 47) {
+                // /
+                hasProblematicAttachment = true;
+              }
+            } else if (nextChar === 45 && i + 1 < length) {
+              // - is attachment only if followed by more alphanumeric content
+              const charAfterHyphen = text.charCodeAt(i + 1);
+              if (
+                (charAfterHyphen >= 48 && charAfterHyphen <= 57) || // 0-9
+                (charAfterHyphen >= 65 && charAfterHyphen <= 90) || // A-Z
+                (charAfterHyphen >= 97 && charAfterHyphen <= 122) // a-z
+              ) {
+                hasProblematicAttachment = true;
+              }
+            }
+          }
+
+          if (!hasProblematicAttachment && this.isPotentialWordFast(word)) {
             if (this.containsProfanityVariantsFast(word)) {
               result += this.createReplacement(word);
               hasAnyChanges = true;
@@ -573,15 +615,12 @@ export class ProfanityFilter {
         const hasSubstitutionChars = this.hasSubstitutionCharacters(token);
 
         if (hasSubstitutionChars) {
-          // For tokens with substitution characters, we need to be more careful
-          // First check for exact matches (complete words)
-          const exactMatches = this.trie.findMatches(extracted);
-          if (exactMatches.length > 0) {
+          // For tokens with substitution characters, check if normalized token is profanity
+          if (this.trie.contains(extracted)) {
             return true;
           }
 
-          // Only use substring matching if the token appears to be part of a compound word
-          // or if the normalization resulted in a significantly shorter string
+          // Check if this might be a compound word that needs substring matching
           const isLikelyCompound = this.isLikelyCompoundWord(token, extracted);
           if (isLikelyCompound) {
             const substringMatches = this.trie.findSubstrings(extracted);
@@ -590,9 +629,8 @@ export class ProfanityFilter {
             }
           }
         } else {
-          // Use findMatches for normal words to respect word boundaries
-          const matches = this.trie.findMatches(extracted);
-          if (matches.length > 0) {
+          // For normal tokens, check if the token is profanity
+          if (this.trie.contains(extracted)) {
             return true;
           }
         }
@@ -791,7 +829,47 @@ export class ProfanityFilter {
           // End of word found
           const word = text.slice(wordStart, i);
 
-          if (this.isPotentialWordFast(word)) {
+          // Check if this word is attached to problematic content that indicates it shouldn't be filtered
+          let hasProblematicAttachment = false;
+          if (i < length) {
+            const nextChar = text.charCodeAt(i);
+            if (
+              nextChar === 35 || // # (hashtag)
+              (nextChar >= 48 && nextChar <= 57) || // 0-9 (numbers directly attached)
+              nextChar === 47 || // / (URLs)
+              nextChar === 95 // _ (identifiers)
+            ) {
+              hasProblematicAttachment = true;
+            } else if (nextChar === 46 && i + 1 < length) {
+              // . is attachment only if followed by letters (like .com, .org)
+              const charAfterDot = text.charCodeAt(i + 1);
+              if (
+                (charAfterDot >= 97 && charAfterDot <= 122) ||
+                (charAfterDot >= 65 && charAfterDot <= 90)
+              ) {
+                hasProblematicAttachment = true;
+              }
+            } else if (nextChar === 58 && i + 1 < length) {
+              // : is attachment only if followed by // (like http://)
+              const charAfterColon = text.charCodeAt(i + 1);
+              if (charAfterColon === 47) {
+                // /
+                hasProblematicAttachment = true;
+              }
+            } else if (nextChar === 45 && i + 1 < length) {
+              // - is attachment only if followed by more alphanumeric content
+              const charAfterHyphen = text.charCodeAt(i + 1);
+              if (
+                (charAfterHyphen >= 48 && charAfterHyphen <= 57) || // 0-9
+                (charAfterHyphen >= 65 && charAfterHyphen <= 90) || // A-Z
+                (charAfterHyphen >= 97 && charAfterHyphen <= 122) // a-z
+              ) {
+                hasProblematicAttachment = true;
+              }
+            }
+          }
+
+          if (!hasProblematicAttachment && this.isPotentialWordFast(word)) {
             if (this.containsProfanityVariantsFast(word)) {
               return true; // Early termination - found profanity
             }
@@ -850,7 +928,47 @@ export class ProfanityFilter {
           // End of word found
           const word = text.slice(wordStart, i);
 
-          if (this.isPotentialWordFast(word)) {
+          // Check if this word is attached to problematic content that indicates it shouldn't be filtered
+          let hasProblematicAttachment = false;
+          if (i < length) {
+            const nextChar = text.charCodeAt(i);
+            if (
+              nextChar === 35 || // # (hashtag)
+              (nextChar >= 48 && nextChar <= 57) || // 0-9 (numbers directly attached)
+              nextChar === 47 || // / (URLs)
+              nextChar === 95 // _ (identifiers)
+            ) {
+              hasProblematicAttachment = true;
+            } else if (nextChar === 46 && i + 1 < length) {
+              // . is attachment only if followed by letters (like .com, .org)
+              const charAfterDot = text.charCodeAt(i + 1);
+              if (
+                (charAfterDot >= 97 && charAfterDot <= 122) ||
+                (charAfterDot >= 65 && charAfterDot <= 90)
+              ) {
+                hasProblematicAttachment = true;
+              }
+            } else if (nextChar === 58 && i + 1 < length) {
+              // : is attachment only if followed by // (like http://)
+              const charAfterColon = text.charCodeAt(i + 1);
+              if (charAfterColon === 47) {
+                // /
+                hasProblematicAttachment = true;
+              }
+            } else if (nextChar === 45 && i + 1 < length) {
+              // - is attachment only if followed by more alphanumeric content
+              const charAfterHyphen = text.charCodeAt(i + 1);
+              if (
+                (charAfterHyphen >= 48 && charAfterHyphen <= 57) || // 0-9
+                (charAfterHyphen >= 65 && charAfterHyphen <= 90) || // A-Z
+                (charAfterHyphen >= 97 && charAfterHyphen <= 122) // a-z
+              ) {
+                hasProblematicAttachment = true;
+              }
+            }
+          }
+
+          if (!hasProblematicAttachment && this.isPotentialWordFast(word)) {
             const foundWords = this.getProfanityVariantsFast(word);
             for (const foundWord of foundWords) {
               found.push(foundWord); // Add all instances, including duplicates
@@ -938,15 +1056,12 @@ export class ProfanityFilter {
             this.hasSubstitutionCharacters(tokenToCheck);
 
           if (hasSubstitutionChars) {
-            // For tokens with substitution characters, we need to be more careful
-            // First check for exact matches (complete words)
-            const exactMatches = this.trie.findMatches(extracted);
-            for (const match of exactMatches) {
-              found.push(match.word);
+            // For tokens with substitution characters, check if normalized token is profanity
+            if (this.trie.contains(extracted)) {
+              found.push(extracted); // Add the normalized form
             }
 
-            // Only use substring matching if the token appears to be part of a compound word
-            // or if the normalization resulted in a significantly shorter string
+            // Check if this might be a compound word that needs substring matching
             const isLikelyCompound = this.isLikelyCompoundWord(
               tokenToCheck,
               extracted
@@ -958,10 +1073,9 @@ export class ProfanityFilter {
               }
             }
           } else {
-            // Use findMatches for normal words to respect word boundaries
-            const matches = this.trie.findMatches(extracted);
-            for (const match of matches) {
-              found.push(match.word);
+            // For normal tokens, check if the token is profanity
+            if (this.trie.contains(extracted)) {
+              found.push(extracted); // Add the normalized form
             }
           }
         }
