@@ -75,7 +75,7 @@ export const DEFAULT_WORDS = new Set([
   'arse',
   'shag',
   'shite',
-  'feck',
+  // 'feck', // REMOVED: conflicts with f*ck wildcard matching
   'frig',
   'knob',
   'pillock',

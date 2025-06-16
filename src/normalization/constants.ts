@@ -1,5 +1,7 @@
 /**
- * Character substitution constants and mappings
+ * Character substitution constants and mapp  ['1', 'i'],
+  ['!', 'i'],
+  ['|', 'i'],gs
  *
  * Comprehensive collection of character substitutions for detecting
  * l33t speak, Unicode variants, and international characters.
@@ -31,6 +33,7 @@ export const CHAR_MAP = new Map([
   ['[)', 'd'],
   ['о', 'd'], // Cyrillic о as d
   ['3', 'e'],
+  ['2', 'e'], // 2 can look like e in some fonts/contexts
   ['€', 'e'],
   ['е', 'e'],
   ['э', 'e'],
@@ -43,7 +46,7 @@ export const CHAR_MAP = new Map([
   ['9', 'g'],
   ['&', 'g'],
   ['ق', 'g'], // Arabic ق
-  ['#', 'h'],
+  // ['#', 'h'], // REMOVED: # should be boundary character, not substitution
   ['|-|', 'h'],
   ['н', 'h'], // Cyrillic н
   ['1', 'i'],

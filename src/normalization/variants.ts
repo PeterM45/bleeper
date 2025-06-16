@@ -50,26 +50,28 @@ export const getAllNormalizations = (text: string): string[] => {
     return [primaryNormalized];
   }
 
-  // Generate only ONE additional variant for performance
-  // Focus on the most common ambiguous character substitution
+  // Generate variants for ambiguous characters (optimized for asterisk masking)
+  const variants: string[] = [primaryNormalized];
+
   for (let i = 0; i < primaryNormalized.length; i++) {
     const char = primaryNormalized[i]!;
     const ambiguousOptions = AMBIGUOUS_CHARS.get(char as any);
 
     if (ambiguousOptions && ambiguousOptions.length > 1) {
-      // Generate one variant with the most common alternative
+      // For ambiguous chars, generate one variant
       const alternative = ambiguousOptions[1] || ambiguousOptions[0]!;
       if (alternative !== char) {
         const variant =
           primaryNormalized.slice(0, i) +
           alternative +
           primaryNormalized.slice(i + 1);
-        return [primaryNormalized, variant];
+        variants.push(variant);
+        break; // Only handle first ambiguous char for performance
       }
     }
   }
 
-  return [primaryNormalized];
+  return variants;
 };
 
 /**

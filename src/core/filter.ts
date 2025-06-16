@@ -8,6 +8,7 @@
  */
 
 import { getAllNormalizations } from '../normalization/variants.js';
+import { CHAR_MAP } from '../normalization/constants.js';
 import { DEFAULT_WORDS } from '../data/words.js';
 import { Trie } from '../structures/trie.js';
 import type { FilterOptions, FilterResult } from '../types/index.js';
@@ -51,19 +52,20 @@ export class ProfanityFilter {
     9,
     10,
     13, // whitespace
+    33, // ! - boundary (can also be substitution, handled in normalization)
     34, // "
-    // 35, // # - REMOVED: is substitution char for 'h'
+    35, // # - hashtag (word boundary, not substitution)
     37, // %
     38, // &
     39, // '
-    40, // (
+    40, // ( - boundary (can also be substitution in words like fu(k)
     41, // )
-    // 42, // * - REMOVED: is substitution char for 'u'
+    // 42, // * - REMOVED: is substitution char for 'u' and 't'
     // 43, // + - REMOVED: is substitution char for 't'
     44, // ,
     45, // -
     46, // .
-    47, // /
+    // 47, // / - COULD BE REMOVED: sometimes substitution char
     58, // :
     59, // ;
     60, // <
@@ -71,7 +73,7 @@ export class ProfanityFilter {
     62, // >
     63, // ?
     91, // [
-    92, // \
+    // 92, // \ - COULD BE REMOVED: sometimes substitution char
     93, // ]
     94, // ^
     95, // _
@@ -90,7 +92,7 @@ export class ProfanityFilter {
       replacement: options.replacement ?? '*',
       customWords: options.customWords ?? [],
       customOnly: options.customOnly ?? false,
-      preserveLength: options.preserveLength ?? true,
+      preserveLength: options.preserveLength ?? true, // Keep default as true
     };
 
     const { trie, bloomFilter } = this.buildOptimizedStructures();
@@ -204,6 +206,7 @@ export class ProfanityFilter {
         code === 115 || // s
         code === 100 || // d
         code === 99 || // c
+        code === 33 || // ! - ADDED
         code === 70 || // F
         code === 75 || // K
         code === 72 || // H
@@ -239,7 +242,8 @@ export class ProfanityFilter {
 
     for (let i = 0; i <= length; i++) {
       const charCode = i < length ? text.charCodeAt(i) : 32; // Treat end as boundary
-      const isBoundary = ProfanityFilter.BOUNDARY_CHARS.has(charCode);
+      const isBoundary =
+        i < length ? ProfanityFilter.isBoundaryAtPosition(text, i) : true; // End of text is always boundary
 
       if (wordStart === -1) {
         // Looking for word start
@@ -252,7 +256,7 @@ export class ProfanityFilter {
       } else {
         // In a word, looking for word end
         if (isBoundary || i === length) {
-          // End of word found
+          // End of word found (no extension logic for simplicity and performance)
           const word = text.slice(wordStart, i);
 
           if (this.isPotentialWordFast(word)) {
@@ -269,7 +273,9 @@ export class ProfanityFilter {
           wordStart = -1;
 
           // Add the boundary character
-          if (i < length) result += text[i];
+          if (i < length) {
+            result += text[i];
+          }
         }
       }
     }
@@ -278,10 +284,65 @@ export class ProfanityFilter {
   }
 
   /**
+   * Find extended word that includes attached numbers/special chars
+   * Returns the full word including attached content
+   */
+  private findExtendedWord(
+    text: string,
+    start: number,
+    currentEnd: number
+  ): string {
+    const baseWord = text.slice(start, currentEnd);
+    let end = currentEnd;
+
+    // Look ahead for attached content
+    while (end < text.length) {
+      const char = text[end];
+      const charCode = text.charCodeAt(end);
+
+      // Stop at whitespace
+      if (
+        charCode === 32 ||
+        charCode === 9 ||
+        charCode === 10 ||
+        charCode === 13
+      ) {
+        break;
+      }
+
+      // Continue for numbers, letters, and certain special chars that indicate attachment
+      if (
+        (charCode >= 48 && charCode <= 57) || // 0-9
+        (charCode >= 65 && charCode <= 90) || // A-Z
+        (charCode >= 97 && charCode <= 122) || // a-z
+        charCode === 35 || // #
+        charCode === 46 || // .
+        charCode === 47 || // /
+        charCode === 45 || // -
+        charCode === 95 || // _
+        charCode === 58 || // :
+        charCode === 126 // ~
+      ) {
+        end++;
+      } else {
+        break;
+      }
+    }
+
+    return text.slice(start, end);
+  }
+
+  /**
    * Ultra-fast potential word check
    */
   private isPotentialWordFast(token: string): boolean {
     if (token.length < 3) return false;
+
+    // Skip words that are attached to numbers or non-substitution special characters
+    // This prevents filtering things like "123shit", "shit#hashtag", "example.com/shit"
+    if (this.isAttachedWord(token)) {
+      return false;
+    }
 
     // Check if it has at least one letter, number, or substitution character
     for (let i = 0; i < token.length; i++) {
@@ -304,6 +365,7 @@ export class ProfanityFilter {
         code === 124 || // |
         code === 42 || // *
         code === 43 || // +
+        code === 33 || // ! - ADDED
         // Greek letters
         code === 945 || // α (Greek alpha)
         code === 964 || // τ (Greek tau)
@@ -323,17 +385,187 @@ export class ProfanityFilter {
   }
 
   /**
+   * Check if a word is "attached" to numbers or special characters
+   * Attached words should not be filtered to avoid false positives
+   */
+  private isAttachedWord(token: string): boolean {
+    // Check for patterns that suggest attachment to non-profanity content
+
+    // Pattern 1: Starts or ends with multiple consecutive digits (123shit, shit123)
+    if (this.hasConsecutiveDigitsAtEnds(token)) {
+      return true;
+    }
+
+    // Pattern 2: Contains non-substitution special characters like # . / : - _ ~
+    if (this.hasNonSubstitutionSpecialChars(token)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Check if token has consecutive digits at the beginning or end
+   * This indicates attachment to numbers rather than l33t speak substitution
+   */
+  private hasConsecutiveDigitsAtEnds(token: string): boolean {
+    // Check beginning for consecutive digits
+    let consecutiveStart = 0;
+    for (
+      let i = 0;
+      i < token.length &&
+      token.charCodeAt(i) >= 48 &&
+      token.charCodeAt(i) <= 57;
+      i++
+    ) {
+      consecutiveStart++;
+    }
+
+    // Check end for consecutive digits
+    let consecutiveEnd = 0;
+    for (
+      let i = token.length - 1;
+      i >= 0 && token.charCodeAt(i) >= 48 && token.charCodeAt(i) <= 57;
+      i--
+    ) {
+      consecutiveEnd++;
+    }
+
+    // If 2+ consecutive digits at start or end, likely attached to numbers
+    return consecutiveStart >= 2 || consecutiveEnd >= 2;
+  }
+
+  /**
+   * Check if token contains special characters that aren't common l33t speak substitutions
+   */
+  private hasNonSubstitutionSpecialChars(token: string): boolean {
+    for (let i = 0; i < token.length; i++) {
+      const code = token.charCodeAt(i);
+      if (
+        code === 35 || // # (hashtag, URL fragment)
+        code === 46 || // . (domain, file extension)
+        code === 47 || // / (URL path)
+        code === 58 || // : (URL scheme, time)
+        code === 45 || // - (hyphen in URLs, compound words)
+        code === 95 || // _ (underscore in identifiers)
+        code === 126 // ~ (tilde in paths)
+      ) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
    * Fast profanity variant check - simplified version
    */
   private containsProfanityVariantsFast(token: string): boolean {
+    // First check if token contains wildcards (*) - handle these specially
+    if (token.includes('*')) {
+      return this.checkWildcardToken(token);
+    }
+
+    // Check for repeated character patterns (like shiiiit -> shit)
+    const compressedToken = this.compressRepeatedChars(token);
+    if (compressedToken !== token) {
+      // If compression occurred, check both original and compressed versions
+      if (
+        this.checkTokenVariants(token) ||
+        this.checkTokenVariants(compressedToken)
+      ) {
+        return true;
+      }
+    } else {
+      // No compression needed, check normally
+      return this.checkTokenVariants(token);
+    }
+
+    return false;
+  }
+
+  /**
+   * Compress repeated characters (shiiiit -> shit, fuuuck -> fuck)
+   * Reduces repeated characters to single occurrence for profanity detection
+   * But avoids compression if there's excessive repetition (likely not real profanity)
+   */
+  private compressRepeatedChars(token: string): string {
+    // Check for excessive repetition first
+    if (this.hasExcessiveRepetition(token)) {
+      return token; // Don't compress if too many repeated chars
+    }
+
+    let result = '';
+    let lastChar = '';
+
+    for (const char of token) {
+      if (char !== lastChar) {
+        result += char;
+        lastChar = char;
+      }
+      // Skip repeated characters (compress to single occurrence)
+    }
+
+    return result;
+  }
+
+  /**
+   * Check if token has excessive character repetition that suggests it's not real profanity
+   * Words like "shiiiiiiiiit" with many repeated chars are likely noise
+   */
+  private hasExcessiveRepetition(token: string): boolean {
+    let maxRepeatCount = 0;
+    let currentRepeatCount = 1;
+    let lastChar = '';
+    let hasExcessivePunctuation = false;
+
+    for (const char of token) {
+      if (char === lastChar) {
+        currentRepeatCount++;
+        maxRepeatCount = Math.max(maxRepeatCount, currentRepeatCount);
+
+        // Check for excessive punctuation repetition
+        const charCode = char.charCodeAt(0);
+        if (
+          charCode === 33 || // !
+          charCode === 63 || // ?
+          charCode === 46 || // .
+          charCode === 44 || // ,
+          charCode === 59 || // ;
+          charCode === 58 // :
+        ) {
+          if (currentRepeatCount > 1) {
+            // Even 2 repeated punctuation marks is excessive
+            hasExcessivePunctuation = true;
+          }
+        }
+      } else {
+        currentRepeatCount = 1;
+        lastChar = char;
+      }
+    }
+
+    // Excessive if:
+    // 1. Any punctuation character repeated more than once, OR
+    // 2. Any letter repeated more than 6 times
+    return hasExcessivePunctuation || maxRepeatCount > 6;
+  }
+
+  /**
+   * Check token variants using normalization and trie lookup
+   */
+  private checkTokenVariants(token: string): boolean {
     // Get normalizations and check trie (skip bloom filter for small tokens)
     const normalizations = getAllNormalizations(token);
 
     for (const normalized of normalizations) {
-      const extracted = this.extractAlphanumericFast(normalized);
+      const extracted = this.extractAlphanumericWithWildcards(normalized);
       if (extracted.length >= 3) {
-        // For performance, check bloom filter only for longer words
-        if (extracted.length > 6 && !this.bloomFilterContains(extracted)) {
+        // For performance, check bloom filter only for longer words without wildcards
+        if (
+          extracted.length > 6 &&
+          !extracted.includes('*') &&
+          !this.bloomFilterContains(extracted)
+        ) {
           continue;
         }
 
@@ -341,10 +573,21 @@ export class ProfanityFilter {
         const hasSubstitutionChars = this.hasSubstitutionCharacters(token);
 
         if (hasSubstitutionChars) {
-          // Use findSubstrings for tokens with substitution characters
-          const matches = this.trie.findSubstrings(extracted);
-          if (matches.length > 0) {
+          // For tokens with substitution characters, we need to be more careful
+          // First check for exact matches (complete words)
+          const exactMatches = this.trie.findMatches(extracted);
+          if (exactMatches.length > 0) {
             return true;
+          }
+
+          // Only use substring matching if the token appears to be part of a compound word
+          // or if the normalization resulted in a significantly shorter string
+          const isLikelyCompound = this.isLikelyCompoundWord(token, extracted);
+          if (isLikelyCompound) {
+            const substringMatches = this.trie.findSubstrings(extracted);
+            if (substringMatches.length > 0) {
+              return true;
+            }
           }
         } else {
           // Use findMatches for normal words to respect word boundaries
@@ -360,9 +603,50 @@ export class ProfanityFilter {
   }
 
   /**
-   * Optimized alphanumeric extraction
+   * Check wildcard tokens specifically
+   * @param token - Token containing asterisks
+   * @returns True if wildcard matches profanity
    */
-  private extractAlphanumericFast(str: string): string {
+  private checkWildcardToken(token: string): boolean {
+    // Apply basic normalization but preserve asterisks
+    let normalizedToken = token.toLowerCase();
+
+    // Apply character substitutions except for asterisks
+    let result = '';
+    for (let i = 0; i < normalizedToken.length; i++) {
+      const char = normalizedToken[i]!;
+      if (char === '*') {
+        result += char; // Preserve asterisk
+      } else {
+        result += CHAR_MAP.get(char) ?? char;
+      }
+    }
+
+    // Extract alphanumeric + asterisks only
+    const extracted = this.extractAlphanumericWithWildcards(result);
+
+    if (extracted.length >= 3) {
+      // Check if significant normalization occurred (excluding asterisks)
+      const hasSubstitutionChars = this.hasSubstitutionCharacters(
+        token.replace(/\*/g, '')
+      );
+
+      // Use wildcard matching
+      const wildcardMatches = hasSubstitutionChars
+        ? this.trie.findSubstringsWithWildcards(extracted)
+        : this.trie.findMatchesWithWildcards(extracted);
+
+      return wildcardMatches.length > 0;
+    }
+
+    return false;
+  }
+
+  /**
+   * Optimized alphanumeric extraction with wildcard preservation
+   * Preserves asterisks (*) for wildcard matching while extracting other characters
+   */
+  private extractAlphanumericWithWildcards(str: string): string {
     let result = '';
 
     for (let i = 0; i < str.length; i++) {
@@ -370,13 +654,22 @@ export class ProfanityFilter {
       if (
         (code >= 48 && code <= 57) || // 0-9
         (code >= 65 && code <= 90) || // A-Z
-        (code >= 97 && code <= 122) // a-z
+        (code >= 97 && code <= 122) || // a-z
+        code === 42 // * (asterisk for wildcards)
       ) {
         result += str[i];
       }
     }
 
     return result.toLowerCase();
+  }
+
+  /**
+   * Legacy method - kept for backward compatibility
+   * @deprecated Use extractAlphanumericWithWildcards instead
+   */
+  private extractAlphanumericFast(str: string): string {
+    return this.extractAlphanumericWithWildcards(str).replace(/\*/g, '');
   }
 
   /**
@@ -397,7 +690,17 @@ export class ProfanityFilter {
         code === 55 || // 7
         code === 35 || // #
         code === 124 || // |
-        code === 43 // +
+        code === 43 || // +
+        code === 33 || // ! - ADDED: exclamation mark for substitutions like 5h!7
+        code === 40 || // ( - ADDED: parenthesis for substitutions like fu(k
+        code === 50 || // 2 - ADDED: for substitutions like h2ll -> hell (2->e)
+        code === 54 || // 6 - ADDED: for substitutions like 6 -> g
+        code === 56 || // 8 - ADDED: for substitutions like 8 -> b
+        code === 57 || // 9 - ADDED: for substitutions like 9 -> g
+        code === 123 || // { - ADDED: curly brace substitutions
+        code === 91 || // [ - ADDED: square bracket substitutions
+        code === 47 || // / - ADDED: slash for substitutions like /\
+        code === 92 // \ - ADDED: backslash for substitutions
       ) {
         return true;
       }
@@ -474,7 +777,8 @@ export class ProfanityFilter {
 
     for (let i = 0; i <= length; i++) {
       const charCode = i < length ? text.charCodeAt(i) : 32; // Treat end as boundary
-      const isBoundary = ProfanityFilter.BOUNDARY_CHARS.has(charCode);
+      const isBoundary =
+        i < length ? ProfanityFilter.isBoundaryAtPosition(text, i) : true; // End of text is always boundary
 
       if (wordStart === -1) {
         // Looking for word start
@@ -532,7 +836,8 @@ export class ProfanityFilter {
     // Stream through text to find profanity words
     for (let i = 0; i <= length; i++) {
       const charCode = i < length ? text.charCodeAt(i) : 32; // Treat end as boundary
-      const isBoundary = ProfanityFilter.BOUNDARY_CHARS.has(charCode);
+      const isBoundary =
+        i < length ? ProfanityFilter.isBoundaryAtPosition(text, i) : true; // End of text is always boundary
 
       if (wordStart === -1) {
         // Looking for word start
@@ -572,30 +877,92 @@ export class ProfanityFilter {
   private getProfanityVariantsFast(token: string): string[] {
     const found: string[] = [];
 
-    const normalizations = getAllNormalizations(token);
+    // First check if token contains wildcards (*) - handle these specially
+    if (token.includes('*')) {
+      // Apply basic normalization but preserve asterisks
+      let normalizedToken = token.toLowerCase();
 
-    for (const normalized of normalizations) {
-      const extracted = this.extractAlphanumericFast(normalized);
-      if (extracted.length >= 3) {
-        // For performance, check bloom filter only for longer words
-        if (extracted.length > 6 && !this.bloomFilterContains(extracted)) {
-          continue;
-        }
-
-        // Check if significant normalization occurred (substitution characters present)
-        const hasSubstitutionChars = this.hasSubstitutionCharacters(token);
-
-        if (hasSubstitutionChars) {
-          // Use findSubstrings for tokens with substitution characters
-          const matches = this.trie.findSubstrings(extracted);
-          for (const match of matches) {
-            found.push(match.word);
-          }
+      // Apply character substitutions except for asterisks
+      let result = '';
+      for (let i = 0; i < normalizedToken.length; i++) {
+        const char = normalizedToken[i]!;
+        if (char === '*') {
+          result += char; // Preserve asterisk
         } else {
-          // Use findMatches for normal words to respect word boundaries
-          const matches = this.trie.findMatches(extracted);
-          for (const match of matches) {
-            found.push(match.word);
+          result += CHAR_MAP.get(char) ?? char;
+        }
+      }
+
+      // Extract alphanumeric + asterisks only
+      const extracted = this.extractAlphanumericWithWildcards(result);
+
+      if (extracted.length >= 3) {
+        // Check if significant normalization occurred (excluding asterisks)
+        const hasSubstitutionChars = this.hasSubstitutionCharacters(
+          token.replace(/\*/g, '')
+        );
+
+        // Use wildcard matching
+        const wildcardMatches = hasSubstitutionChars
+          ? this.trie.findSubstringsWithWildcards(extracted)
+          : this.trie.findMatchesWithWildcards(extracted);
+
+        for (const match of wildcardMatches) {
+          found.push(match.word);
+        }
+      }
+
+      return found;
+    }
+
+    // Check for repeated character patterns (like shiiiit -> shit)
+    const compressedToken = this.compressRepeatedChars(token);
+
+    // Check both original and compressed versions if different
+    const tokensToCheck =
+      compressedToken !== token ? [token, compressedToken] : [token];
+
+    for (const tokenToCheck of tokensToCheck) {
+      const normalizations = getAllNormalizations(tokenToCheck);
+
+      for (const normalized of normalizations) {
+        const extracted = this.extractAlphanumericFast(normalized);
+        if (extracted.length >= 3) {
+          // For performance, check bloom filter only for longer words
+          if (extracted.length > 6 && !this.bloomFilterContains(extracted)) {
+            continue;
+          }
+
+          // Check if significant normalization occurred (substitution characters present)
+          const hasSubstitutionChars =
+            this.hasSubstitutionCharacters(tokenToCheck);
+
+          if (hasSubstitutionChars) {
+            // For tokens with substitution characters, we need to be more careful
+            // First check for exact matches (complete words)
+            const exactMatches = this.trie.findMatches(extracted);
+            for (const match of exactMatches) {
+              found.push(match.word);
+            }
+
+            // Only use substring matching if the token appears to be part of a compound word
+            // or if the normalization resulted in a significantly shorter string
+            const isLikelyCompound = this.isLikelyCompoundWord(
+              tokenToCheck,
+              extracted
+            );
+            if (isLikelyCompound) {
+              const substringMatches = this.trie.findSubstrings(extracted);
+              for (const match of substringMatches) {
+                found.push(match.word);
+              }
+            }
+          } else {
+            // Use findMatches for normal words to respect word boundaries
+            const matches = this.trie.findMatches(extracted);
+            for (const match of matches) {
+              found.push(match.word);
+            }
           }
         }
       }
@@ -617,11 +984,12 @@ export class ProfanityFilter {
    * Create replacement string with optimal performance
    */
   private createReplacement(originalToken: string): string {
+    const { replacement } = this.options;
+
     if (!this.options.preserveLength) {
-      return this.options.replacement;
+      return replacement;
     }
 
-    const { replacement } = this.options;
     const targetLength = originalToken.length;
 
     // Optimize for single-character replacement (most common case)
@@ -629,11 +997,24 @@ export class ProfanityFilter {
       return replacement.repeat(targetLength);
     }
 
-    // Handle multi-character replacements
-    if (replacement.length >= targetLength) {
+    // For multi-character replacements when preserveLength is true:
+    // If replacement is longer than target, only use it if it's a special case
+    // Otherwise truncate or repeat as needed
+    if (replacement.length > targetLength) {
+      // Special case: if replacement looks like a word in brackets, use full replacement
+      if (replacement.startsWith('[') && replacement.endsWith(']')) {
+        return replacement;
+      }
+      // Otherwise truncate to preserve length
       return replacement.slice(0, targetLength);
     }
 
+    // If replacement is shorter than or equal to target length
+    if (replacement.length === targetLength) {
+      return replacement;
+    }
+
+    // Replacement is shorter than target, repeat it to fill the length
     const repeatCount = Math.floor(targetLength / replacement.length);
     const remainder = targetLength % replacement.length;
 
@@ -783,6 +1164,120 @@ export class ProfanityFilter {
 
     // Check only the remainder
     return this.streamingContainsOptimized(remainder);
+  }
+
+  /**
+   * Determine if a token is likely a compound word that should be checked for substrings
+   * This helps distinguish between:
+   * - "H3llo" (standalone word, should not substring match "hell")
+   * - "bullsh1t" (compound word, should substring match "shit")
+   */
+  private isLikelyCompoundWord(
+    originalToken: string,
+    normalizedToken: string
+  ): boolean {
+    // If the token contains clear word boundaries or formatting, it's likely compound
+    if (this.hasInternalWordBoundaries(originalToken)) {
+      return true;
+    }
+
+    // If the token has mixed case in a way that suggests multiple words
+    if (this.hasMixedCaseWordPattern(originalToken)) {
+      return true;
+    }
+
+    // If the token is significantly longer than most single profanity words,
+    // it might be a compound (like "bullshit", "motherfucker")
+    if (originalToken.length > 8) {
+      return true;
+    }
+
+    // Default to false for standalone words
+    // This prevents cases like "H3llo" matching "hell" via substring
+    return false;
+  }
+
+  /**
+   * Check if token has internal word boundaries suggesting compound structure
+   */
+  private hasInternalWordBoundaries(token: string): boolean {
+    for (let i = 1; i < token.length - 1; i++) {
+      const code = token.charCodeAt(i);
+      if (
+        code === 45 || // - (hyphen)
+        code === 95 || // _ (underscore)
+        code === 46 // . (period, less common but possible)
+      ) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Check if token has mixed case pattern suggesting multiple words
+   * Like "ShitHead" or "badAssBitch"
+   */
+  private hasMixedCaseWordPattern(token: string): boolean {
+    let hasLower = false;
+    let hasUpper = false;
+    let caseChanges = 0;
+    let lastWasUpper = false;
+
+    for (let i = 0; i < token.length; i++) {
+      const code = token.charCodeAt(i);
+      const isUpper = code >= 65 && code <= 90;
+      const isLower = code >= 97 && code <= 122;
+
+      if (isUpper) {
+        hasUpper = true;
+        if (!lastWasUpper && i > 0) {
+          caseChanges++;
+        }
+        lastWasUpper = true;
+      } else if (isLower) {
+        hasLower = true;
+        lastWasUpper = false;
+      }
+    }
+
+    // If we have both cases and at least one case change, it might be compound
+    return hasLower && hasUpper && caseChanges > 0;
+  }
+
+  /**
+   * Check if a character at a given position should be treated as a word boundary
+   * Considers context for characters that can be both boundaries and substitutions
+   */
+  private static isBoundaryAtPosition(text: string, index: number): boolean {
+    const charCode = text.charCodeAt(index);
+
+    // Standard boundary characters
+    if (ProfanityFilter.BOUNDARY_CHARS.has(charCode)) {
+      // Special handling for characters that can be substitutions
+      if (charCode === 40) {
+        // ( is a substitution if it's between letters, boundary otherwise
+        const prevChar = index > 0 ? text.charCodeAt(index - 1) : 0;
+        const nextChar =
+          index < text.length - 1 ? text.charCodeAt(index + 1) : 0;
+
+        const prevIsLetter =
+          (prevChar >= 65 && prevChar <= 90) ||
+          (prevChar >= 97 && prevChar <= 122);
+        const nextIsLetter =
+          (nextChar >= 65 && nextChar <= 90) ||
+          (nextChar >= 97 && nextChar <= 122);
+
+        // If surrounded by letters, treat as substitution (not boundary)
+        if (prevIsLetter && nextIsLetter) {
+          return false;
+        }
+      }
+
+      return true;
+    }
+
+    return false;
   }
 }
 

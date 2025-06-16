@@ -183,4 +183,116 @@ export class Trie {
 
     return matches;
   }
+
+  /**
+   * Find all matches with wildcard support (respects word boundaries)
+   * Treats '*' as a single-character wildcard that can match any letter
+   *
+   * @param text - Text to search through
+   * @returns Array of found words with their positions
+   * @complexity O(n * m * k) where n is text length, m is word length, k is wildcard count
+   */
+  public findMatchesWithWildcards(
+    text: string
+  ): Array<{ word: string; start: number; end: number }> {
+    const matches: Array<{ word: string; start: number; end: number }> = [];
+    const length = text.length;
+
+    for (let i = 0; i < length; i++) {
+      // Skip if not at word boundary
+      if (i > 0 && this.isWordChar(text.charAt(i - 1))) continue;
+
+      const foundMatches = this.searchWithWildcardsFromPosition(text, i, true);
+      matches.push(...foundMatches);
+    }
+
+    return matches;
+  }
+
+  /**
+   * Find all substring matches with wildcard support (no word boundary restrictions)
+   * Treats '*' as a single-character wildcard that can match any letter
+   *
+   * @param text - Text to search through
+   * @returns Array of found words with their positions
+   * @complexity O(n * m * k) where n is text length, m is word length, k is wildcard count
+   */
+  public findSubstringsWithWildcards(
+    text: string
+  ): Array<{ word: string; start: number; end: number }> {
+    const matches: Array<{ word: string; start: number; end: number }> = [];
+    const length = text.length;
+
+    for (let i = 0; i < length; i++) {
+      const foundMatches = this.searchWithWildcardsFromPosition(text, i, false);
+      matches.push(...foundMatches);
+    }
+
+    return matches;
+  }
+
+  /**
+   * Search for wildcard matches starting from a specific position
+   *
+   * @param text - Text to search through
+   * @param startPos - Starting position in text
+   * @param respectWordBoundaries - Whether to respect word boundaries
+   * @returns Array of found matches
+   * @internal
+   */
+  private searchWithWildcardsFromPosition(
+    text: string,
+    startPos: number,
+    respectWordBoundaries: boolean
+  ): Array<{ word: string; start: number; end: number }> {
+    const matches: Array<{ word: string; start: number; end: number }> = [];
+
+    // Use recursive DFS to handle wildcards
+    const search = (node: TrieNode, pos: number, matchedText: string): void => {
+      // If we've reached the end of a word and it's at proper boundary
+      if (node.isEndOfWord) {
+        const isValidMatch =
+          !respectWordBoundaries ||
+          pos >= text.length ||
+          !this.isWordChar(text.charAt(pos));
+
+        if (isValidMatch) {
+          matches.push({
+            word: matchedText,
+            start: startPos,
+            end: pos,
+          });
+        }
+      }
+
+      // If we've reached end of text, stop
+      if (pos >= text.length) return;
+
+      const currentChar = text.charAt(pos);
+
+      // Handle wildcard character '*'
+      if (currentChar === '*') {
+        // Try matching '*' with any letter (a-z)
+        for (let charCode = 97; charCode <= 122; charCode++) {
+          const letter = String.fromCharCode(charCode);
+          if (node.children.has(letter)) {
+            search(node.children.get(letter)!, pos + 1, matchedText + letter);
+          }
+        }
+        return;
+      }
+
+      // Handle normal character matching
+      if (node.children.has(currentChar)) {
+        search(
+          node.children.get(currentChar)!,
+          pos + 1,
+          matchedText + currentChar
+        );
+      }
+    };
+
+    search(this.root, startPos, '');
+    return matches;
+  }
 }
